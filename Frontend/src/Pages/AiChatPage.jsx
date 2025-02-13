@@ -108,7 +108,7 @@ const AiChatPage = () => {
         }}
       >
         <Typography variant="h4" align="center" gutterBottom sx={{ mt: 2 }}>
-          AI Chat
+          AI Consultation
         </Typography>
         <Box
           sx={{

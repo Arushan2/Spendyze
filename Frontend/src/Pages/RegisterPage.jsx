@@ -1,51 +1,31 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "./useAuth";
-import { Paper, Typography, TextField, Button, Stack, Alert, Box } from "@mui/material";
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Stack,
+  Alert,
+  Box,
+  Checkbox,
+  FormControlLabel
+} from "@mui/material";
 
-function LoginPage() {
+function RegisterPage() {
+  const [fullName, setFullName] = useState(""); // extra field for full name
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedTnC, setAcceptedTnC] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
 
   const navigate = useNavigate();
-  const { login } = useAuth();
 
-  useEffect(() => {
-    const userId = sessionStorage.getItem("userId");
-    if (userId) {
-      navigate("/home");
-    }
-  }, [navigate]);
-
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    setErrorMsg("");
-    setStatusMsg("");
+    if (!acceptedTnC) return; // prevent submission if T&C not accepted
 
-    try {
-      const response = await fetch("https://spendyze.duckdns.org/login", {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ username, password })
-      });
-      const text = await response.text();
-      if (response.ok && text.includes("successful")) {
-        setStatusMsg("Login successful!");
-        sessionStorage.setItem("userId", username);
-        login();
-        navigate("/home");
-      } else {
-        setErrorMsg(text);
-      }
-    } catch (err) {
-      setErrorMsg("Network or server error.");
-    }
-  };
-
-  const handleCreateAccount = async (e) => {
-    e.preventDefault();
     setErrorMsg("");
     setStatusMsg("");
 
@@ -53,11 +33,13 @@ function LoginPage() {
       const response = await fetch("https://spendyze.duckdns.org/create_account", {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ fullName, username, password })
       });
       const text = await response.text();
       if (response.ok && text.includes("successfully")) {
         setStatusMsg("Account created! You can now log in.");
+        // Optionally, auto-redirect to login:
+        // navigate("/login");
       } else {
         setErrorMsg(text);
       }
@@ -77,16 +59,9 @@ function LoginPage() {
         p: 2
       }}
     >
-      <Paper
-        elevation={4}
-        sx={{
-          width: "100%",
-          maxWidth: 400,
-          p: 4
-        }}
-      >
+      <Paper elevation={4} sx={{ width: "100%", maxWidth: 400, p: 4 }}>
         <Typography variant="h5" mb={2}>
-          Login / Create Account
+          Register for Spendyze
         </Typography>
         {errorMsg && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -98,7 +73,14 @@ function LoginPage() {
             {statusMsg}
           </Alert>
         )}
-        <Stack spacing={2} component="form">
+        <Stack spacing={2} component="form" onSubmit={handleRegister}>
+          <TextField
+            label="Full Name"
+            variant="outlined"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+          />
           <TextField
             label="Username"
             variant="outlined"
@@ -114,12 +96,29 @@ function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={acceptedTnC}
+                onChange={(e) => setAcceptedTnC(e.target.checked)}
+                color="primary"
+              />
+            }
+            label={
+              <span>
+                I accept the{" "}
+                <Link to="/terms" style={{ textDecoration: "underline" }}>
+                  Terms and Conditions
+                </Link>
+              </span>
+            }
+          />
           <Stack direction="row" spacing={2} justifyContent="center">
-            <Button variant="contained" onClick={handleLogin}>
-              Login
+            <Button type="submit" variant="contained" disabled={!acceptedTnC}>
+              Register
             </Button>
-            <Button variant="outlined" onClick={handleCreateAccount}>
-              Create Account
+            <Button component={Link} to="/login" variant="outlined">
+              Back to Login
             </Button>
           </Stack>
         </Stack>
@@ -128,4 +127,4 @@ function LoginPage() {
   );
 }
 
-export default LoginPage;
+export default RegisterPage;
